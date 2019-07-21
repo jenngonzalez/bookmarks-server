@@ -33,6 +33,21 @@ app.use(helmet())
 app.use(cors())
 app.use(express.json())
 
+const bookmarks = [
+    {
+        name: 'bookmark one',
+        id: 1
+    },
+    {
+        name: 'bookmark two',
+        id: 2
+    },
+    {
+        name: 'bookmark three',
+        id: 3
+    }
+]
+
 
 app.use(function validateBearerToken(req, res, next) {
     const apiToken = process.env.API_TOKEN
@@ -51,6 +66,25 @@ app.use(function validateBearerToken(req, res, next) {
 app.get('/', (req, res) => {
     res.send('Hello, boilerplate!')
 })
+
+app.get('/bookmarks', (req, res) => {
+    res
+        .json(bookmarks)
+})
+
+app.get('/bookmarks/:id', (req, res) => {
+    // returns a single bookmark with the given id
+    // returns 404 not valid if no id exists
+})
+
+app.post('/bookmarks', (req, res) => {
+    // accepts a json object representing a bookmark and adds it to the list of bookmarks AFTER validation
+})
+
+app.delete('/bookmarks/:id', (req, res) => {
+    // deletes the bookmark with the given ID
+})
+
 
 app.use(function errorHandler(error, req, res, next) {
     let response
