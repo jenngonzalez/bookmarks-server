@@ -1,14 +1,23 @@
 const bookmarks = [
     {
-        name: 'bookmark one',
+        title: 'bookmark one',
+        url: 'http://bookmarkone.com/',
+        description: 'website for bookmark one',
+        rating: 5,
         id: 1
     },
     {
-        name: 'bookmark two',
+        title: 'bookmark two',
+        url: 'http://bookmarktwo.com/',
+        description: 'website for bookmark two',
+        rating: 4,
         id: 2
     },
     {
-        name: 'bookmark three',
+        title: 'bookmark three',
+        url: 'http://bookmarkthree.com/',
+        description: 'website for bookmark three',
+        rating: 2,
         id: 3
     }
 ]
