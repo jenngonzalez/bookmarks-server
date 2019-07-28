@@ -1,7 +1,7 @@
 const { expect } = require('chai')
 const knex = require('knex')
 const app = require('../src/app')
-const { makeBookmarksArray } = require('./bookmarks.fixtures')
+const { makeBookmarksArray, makeMaliciousBookmark } = require('./bookmarks.fixtures')
 
 describe.only('Bookmarks Endpoints', function() {
     let db
@@ -46,6 +46,27 @@ describe.only('Bookmarks Endpoints', function() {
                     .expect(200, testBookmarks)
             })
         })
+
+        context(`Given an XSS attack bookmark`, () => {
+            const { maliciousBookmark, expectedBookmark } = makeMaliciousBookmark()
+
+            beforeEach('insert malicious bookmark', () => {
+                return db
+                    .into('bookmarks_table')
+                    .insert([ maliciousBookmark ])
+            })
+
+            it('removes XSS attack content', () => {
+                return supertest(app)
+                    .get('/bookmarks')
+                    .set('Authorization', `Bearer ${process.env.API_TOKEN}`)
+                    .expect(200)
+                    .expect(res => {
+                        expect(res.body[0].title).to.eql(expectedBookmark.title)
+                        expect(res.body[0].description).to.eql(expectedBookmark.description)
+                    })
+            })
+        })
     })
 
     describe(`GET /bookmarks/:id`, () => {
@@ -74,6 +95,27 @@ describe.only('Bookmarks Endpoints', function() {
                     .get(`/bookmarks/${bookmarkId}`)
                     .set('Authorization', `Bearer ${process.env.API_TOKEN}`)
                     .expect(200, expectedBookmark)
+            })
+        })
+
+        context('Given an XSS attack bookmark', () => {
+            const { maliciousBookmark, expectedBookmark } = makeMaliciousBookmark()
+
+            beforeEach('insert malicious bookmark', () => {
+                return db
+                    .into('bookmarks_table')
+                    .insert([ maliciousBookmark ])
+            })
+
+            it('removes XSS attack content', () => {
+                return supertest(app)
+                    .get(`/bookmarks/${maliciousBookmark.id}`)
+                    .set('Authorization', `Bearer ${process.env.API_TOKEN}`)
+                    .expect(200)
+                    .expect(res => {
+                        expect(res.body.title).to.eql(expectedBookmark.title)
+                        expect(res.body.description).to.eql(expectedBookmark.description)
+                    })
             })
         })
     })
@@ -157,6 +199,19 @@ describe.only('Bookmarks Endpoints', function() {
                 .send(newBookmark)
                 .expect(400, {
                     error: { message: 'Invalid data' }
+                })
+        })
+
+        it(`removes XSS attack content from response`, () => {
+            const { maliciousBookmark, expectedBookmark } = makeMaliciousBookmark()
+            return supertest(app)
+                .post(`/bookmarks`)
+                .set('Authorization', `Bearer: ${process.env.API_TOKEN}`)
+                .send(maliciousBookmark)
+                .expect(201)
+                .expect(res => {
+                    expect(res.body.title).to.eql(expectedBookmark.title)
+                    expect(res.body.description).to.eql(expectedBookmark.description)
                 })
         })
     })

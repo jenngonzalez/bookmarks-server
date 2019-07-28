@@ -22,7 +22,7 @@ bookmarkRouter
         const knexInstance = req.app.get('db')
         BookmarksService.getAllBookmarks(knexInstance)
             .then(bookmarks => {
-                res.json(bookmarks)
+                res.json(bookmarks.map(serializeBookmark))
             })
             .catch(next)
     })
@@ -70,7 +70,7 @@ bookmarkRouter
                         error: { message: `Bookmark doesn't exist`}
                     })
                 }
-                res.json(bookmark)
+                res.json(serializeBookmark(bookmark))
             })
             .catch(next)
     })
