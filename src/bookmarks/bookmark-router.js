@@ -1,4 +1,5 @@
 const express = require('express')
+const xss = require('xss')
 const uuid = require('uuid/v4')
 const logger = require('../logger')
 const { bookmarks } = require('../store')
@@ -6,6 +7,14 @@ const BookmarksService = require('../bookmarks-service')
 
 const bookmarkRouter = express.Router()
 const bodyParser = express.json()
+
+const serializeBookmark = bookmark => ({
+    id: bookmark.id,
+    title: xss(bookmark.title),
+    url: xss(bookmark.url),
+    description: xss(bookmark.description),
+    rating: bookmark.rating
+})
 
 bookmarkRouter
     .route('/bookmarks')
@@ -17,53 +26,36 @@ bookmarkRouter
             })
             .catch(next)
     })
-    .post(bodyParser, (req, res) => {
-        const { title, url, description, rating=1 } = req.body;
+    .post(bodyParser, (req, res, next) => {
+        const knexInstance = req.app.get('db')
+        const { title, url, description, rating=1 } = req.body
+        const newBookmark = { title, url, description, rating }
 
-        if(!title) {
-            logger.error(`Title is required`);
-            return res
-                .status(400)
-                .send('Invalid data');
-        }
-
-        if(!url) {
-            logger.error(`URL is required`);
-            return res
-                .status(400)
-                .send('Invalid data');
-        }
-
-        if(!description) {
-            logger.error(`Description is required`);
-            return res
-                .status(400)
-                .send('Invalid data');
+        for (const [key, value] of Object.entries(newBookmark)) {
+            if (value == null) {
+                return res.status(400).json({
+                    error: { message: `Missing '${key}' in request body`}
+                })
+            }
         }
 
         if(rating > 5 || rating < 1) {
             logger.error(`Rating range is from 1 to 5`);
             return res
                 .status(400)
-                .send('Invalid data');
+                .json({
+                    error: { message: 'Invalid data' }
+                });
         }
     
-        const id = uuid();
-    
-        const bookmark = {
-            title,
-            url,
-            description,
-            rating,
-            id
-        }
-    
-        bookmarks.push(bookmark);
-        logger.info(`Bookmark with id ${id} created`);
-        res
-            .status(201)
-            .location(`http://localhost:8000/bookmarks/${id}`)
-            .json(bookmark);
+        BookmarksService.insertBookmark(knexInstance, newBookmark)
+        .then(bookmark => {
+            res
+              .status(201)
+              .location(`/bookmarks/${bookmark.id}`)
+              .json(serializeBookmark(bookmark))
+          })
+          .catch(next)
     })
 
 bookmarkRouter

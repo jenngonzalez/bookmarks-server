@@ -77,4 +77,87 @@ describe.only('Bookmarks Endpoints', function() {
             })
         })
     })
+
+    describe.only(`POST /bookmarks`, () => {
+        it(`creates a new bookmark, responding with 201 and the new bookmark`, () => {
+            const newBookmark = {
+                title: 'Test new bookmark',
+                url: 'http://www.testnewbookmark.com/',
+                description: 'Test new bookmark description ...',
+                rating: 5
+            }
+            return supertest(app)
+                .post('/bookmarks')
+                .set('Authorization', `Bearer ${process.env.API_TOKEN}`)
+                .send(newBookmark)
+                .expect(201)
+                .expect(res => {
+                    expect(res.body.title).to.eql(newBookmark.title)
+                    expect(res.body.url).to.eql(newBookmark.url)
+                    expect(res.body.description).to.eql(newBookmark.description)
+                    expect(res.body.rating).to.eql(newBookmark.rating)
+                    expect(res.body).to.have.property('id')
+                    expect(res.headers.location).to.eql(`/bookmarks/${res.body.id}`)
+                })
+                .then(postRes => {
+                    supertest(app)
+                        .get(`/bookmarks/${postRes.body.id}`)
+                        .expect(postRes.body)
+                })
+        })
+
+        const requiredFields = ['title', 'url', 'description']
+
+        requiredFields.forEach(field => {
+            const newBookmark = {
+                title: 'Test new bookmark',
+                url: 'http://www.testnewbookmark.com',
+                description: 'Test new bookmark description...'
+            }
+
+            it(`responds with 400 and an error message when the '${field}' is missing`, () => {
+                delete newBookmark[field]
+
+                return supertest(app)
+                    .post('/bookmarks')
+                    .set('Authorization', `Bearer ${process.env.API_TOKEN}`)
+                    .send(newBookmark)
+                    .expect(400, {
+                        error: { message: `Missing '${field}' in request body` }
+                    })
+            })
+        })
+
+        it(`responds with 400 and 'invalid data' when user tries to post a rating <1`, () => {
+            const newBookmark = {
+                title: 'Test new bookmark',
+                url: 'http://www.testnewbookmark.com',
+                description: 'Test new bookmark description...',
+                rating: 0
+            }
+            return supertest(app)
+                .post('/bookmarks')
+                .set('Authorization', `Bearer: ${process.env.API_TOKEN}`)
+                .send(newBookmark)
+                .expect(400, {
+                    error: { message: 'Invalid data' }
+                })
+        })
+
+        it(`responds with 400 and 'invalid data' when user tries to post a rating >5`, () => {
+            const newBookmark = {
+                title: 'Test new bookmark',
+                url: 'http://www.testnewbookmark.com',
+                description: 'Test new bookmark description...',
+                rating: 6
+            }
+            return supertest(app)
+                .post('/bookmarks')
+                .set('Authorization', `Bearer: ${process.env.API_TOKEN}`)
+                .send(newBookmark)
+                .expect(400, {
+                    error: { message: 'Invalid data' }
+                })
+        })
+    })
 })
