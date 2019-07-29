@@ -33,7 +33,7 @@ app.use(function validateBearerToken(req, res, next) {
 
 
 
-app.use(bookmarkRouter)
+app.use('/api/bookmarks', bookmarkRouter)
 
 
 
