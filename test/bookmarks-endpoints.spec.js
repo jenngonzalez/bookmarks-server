@@ -247,7 +247,7 @@ describe.only('Bookmarks Endpoints', function() {
                     .set('Authorization', `Bearer: ${process.env.API_TOKEN}`)
                     .expect(204)
                     .then(res => {
-                        supertest(app)
+                        return supertest(app)
                             .get(`/api/bookmarks`)
                             .set('Authorization', `Bearer: ${process.env.API_TOKEN}`)
                             .expect(expectedBookmarks)
@@ -294,7 +294,7 @@ describe.only('Bookmarks Endpoints', function() {
                     .send(updateBookmark)
                     .expect(204)
                     .then(res => {
-                        supertest(app)
+                        return supertest(app)
                         .get(`/api/bookmarks/${idToUpdate}`)
                         .set('Authorization', `Bearer: ${process.env.API_TOKEN}`)
                         .expect(expectedBookmark)

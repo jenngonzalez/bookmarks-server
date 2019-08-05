@@ -17,6 +17,10 @@ app.use(morgan(morganOption))
 app.use(helmet())
 app.use(cors())
 
+app.get('/', (req, res) => {
+    res.send('Server is running!')
+})
+
 
 app.use(function validateBearerToken(req, res, next) {
     const apiToken = process.env.API_TOKEN
